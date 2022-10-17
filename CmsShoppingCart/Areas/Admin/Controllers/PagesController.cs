@@ -52,8 +52,10 @@ namespace CmsShoppingCart.Areas.Admin.Controllers
                     return View(page);
                 }
                 // good. if slug does not exist
-                _context.Add(page);
+                await _context.AddAsync(page);
                 await _context.SaveChangesAsync();
+
+                TempData["success"] = "page is created";
 
                 return RedirectToAction("Index");
             }
