@@ -37,6 +37,7 @@ namespace CmsShoppingCart.Areas.Admin.Controllers
             return View();
         }
         [HttpPost]
+        [ValidateAntiForgeryToken]
         public async Task<IActionResult> Create(Page page)
         {
             if (ModelState.IsValid)
@@ -58,6 +59,41 @@ namespace CmsShoppingCart.Areas.Admin.Controllers
                 TempData["success"] = "page is created";
 
                 return RedirectToAction("Index");
+            }
+            return View(page);
+        }
+        public async Task<IActionResult> Edit(int id)
+        {
+            var page = await _context.Pages.FirstOrDefaultAsync(p => p.Id == id);
+            if (page == null)
+            {
+                return NotFound();
+            }
+            return View(page);
+        }
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> Edit(Page page)
+        {
+            if (ModelState.IsValid)
+            {
+                page.Slug = page.Id == 1 ? "home" : page.Title.ToLower().Replace(" ", "-");
+                page.Sorting = 100;
+
+                var slug = await _context.Pages.Where(p => p.Id == page.Id).FirstOrDefaultAsync(p => p.Slug == page.Slug);
+                // problem. if slug already exists
+                if (slug != null)
+                {
+                    ModelState.AddModelError("", "The title already exists");
+                    return View(page);
+                }
+                // good. if slug does not exist
+                _context.Update(page);
+                await _context.SaveChangesAsync();
+
+                TempData["success"] = "page is edited";
+
+                return RedirectToAction("Edit", new {id = page.Id});
             }
             return View(page);
         }
